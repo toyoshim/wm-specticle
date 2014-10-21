@@ -1,0 +1,76 @@
+<!--
+Copyright (c) 2014 Takashi Toyoshima <toyoshim@gmail.com>. All rights reserved.
+Distributed under the MIT License (license terms are at http://opensource.org/licenses/MIT).
+-->
+<link rel="import" href="../../app/components/wm-platform/wm-resourcemanager.html">
+<link rel="import" href="../tmalib/polymer/majvj-suite.html">
+<polymer-element name="wm-specticle" extends="wm-resourcemanager">
+  <template>
+    <style type="text/css">
+    .outerline {
+      position:relative;
+      float:left;
+      margin:0px;
+      padding:10px;
+      background-color:#000;
+      border-radius:0px;
+      border:0px solid #dddddd;
+    }
+    </style>
+    <div id="outerline" class="outerline">
+      <majvj-suite id="mv"></majvj-suite>
+      <canvas width="480" height="270" id="canvas"></canvas>
+    </div>
+  </template>
+  <script type="text/javascript">
+  Polymer('wm-specticle', {
+    hello: function() {
+      this.super();
+      var div = this.$['outerline'];
+      var mv = this.$['mv'];
+      div.removeChild(this.$['canvas']);
+      this.vj = mv.create(480, 270, false, div);
+      this.frame = this.vj.create(
+          'frame', 'specticle', { controller: this.controller });
+      this.vj.run(function (delta) {
+        if (this.analyser) {
+          this.analyser.getFloatFrequencyData(this.controller.sound.fftDb);
+        }
+        this.vj.screen().fillColor(0, 0, 0, 1);
+        this.frame.draw(delta);
+      }.bind(this));
+    },
+    getComponentSize: function() {
+      return this.super();
+    },
+    setAudioContext: function(ac) {
+      this.super([ac]);
+      this.analyser = this.ac.createAnalyser();
+      this.controller.sound.fftDb =
+          new Float32Array(this.analyser.frequencyBinCount / 2);
+    },
+    connectToNextNode: function(nn) {
+    },
+    disconnectFromNextNode: function() {
+    },
+    getInputNode: function() {
+      return this.analyser;
+    },
+    setSize: function(event) {
+    },
+    setIgnoreDragging: function(elems) {
+    },
+    setSelfIdName: function(idName) {
+      this.super([idName]);
+    },
+    ready: function(){
+      this.controller = { sound: { fftDb: new Float32Array(4096) } };
+      this.$['mv'].setBase('../bower_components/tmalib/');
+      this.$['mv'].loadPlugin('frame', 'specticle').then(function () {
+        this.hello();
+      }.bind(this), function (e) { console.log(e); });
+    },
+  });
+  </script>
+</polymer>
+
